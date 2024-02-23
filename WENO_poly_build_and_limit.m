@@ -44,11 +44,11 @@ for v_index = 1:Nv
         jp = mapindex(j+1,Nx);
 
         % Compute poly coeff
-        a0 = (1/192)*(f_bar(jm) + 298*f_bar(j) + f_bar(jp) - 54*(fp_im_half(j) + fm_ip_half(j)));
-        a1 = (1/(8*dx))*(f_bar(jm) - f_bar(jp) - 10*(fp_im_half(j) - fm_ip_half(j)));
-        a2 = (1/(8*dx^2))*( -(f_bar(jm) + 58*f_bar(j) + f_bar(jp)) + 30*(fp_im_half(j) + fm_ip_half(j)));
-        a3 = (1/(8*dx^3))*(f_bar(jp) - f_bar(jm) +2*(fp_im_half(j) - fm_ip_half(j)));
-        a4 = (1/(12*dx^4))*( (5*f_bar(jm) + 50*f_bar(j) + 5*f_bar(jp)) - 30*(fp_im_half(j) + fm_ip_half(j)));
+        a0 = (1/192)*(f_bar(jm,v_index) + 298*f_bar(j,v_index) + f_bar(jp,v_index) - 54*(fp_im_half(j,v_index) + fm_ip_half(j,v_index)));
+        a1 = (1/(8*dx))*(f_bar(jm,v_index) - f_bar(jp,v_index) - 10*(fp_im_half(j,v_index) - fm_ip_half(j,v_index)));
+        a2 = (1/(8*dx^2))*( -(f_bar(jm,v_index) + 58*f_bar(j,v_index) + f_bar(jp,v_index)) + 30*(fp_im_half(j,v_index) + fm_ip_half(j,v_index)));
+        a3 = (1/(8*dx^3))*(f_bar(jp,v_index) - f_bar(jm,v_index) +2*(fp_im_half(j,v_index) - fm_ip_half(j,v_index)));
+        a4 = (1/(12*dx^4))*( (5*f_bar(jm,v_index) + 50*f_bar(j,v_index) + 5*f_bar(jp,v_index)) - 30*(fp_im_half(j,v_index) + fm_ip_half(j,v_index)));
 
         % Poly eval:
         poly = [a0,a1,a2,a3,a4];

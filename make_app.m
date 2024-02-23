@@ -5,6 +5,7 @@ function [app] = make_app()
 
 %%% START PROBLEM 1: Variable Knudsen Number %%%
 % Periodic BC
+grid.WENO_order = 3;
 
 % Constants
 app.m0 = 1;
@@ -22,6 +23,7 @@ grid.v_max = 15;
 grid.v_min = -grid.v_max;
 grid.Nv = 150;
 grid.v = linspace(grid.v_min,grid.v_max,grid.Nv);
+grid.dv = grid.v(2) - grid.v(1);
 % Time:
 grid.t_min = 0.0;
 grid.t_max = 0.5;
@@ -44,8 +46,8 @@ for i = 1:grid.Nv
 end
 
 % Build utility arrays
-grid.R = mod( linspace(1,Nx,Nx), Nx) + 1;
-grid.L = mod( linspace(-1,Nx-2,Nx), Nx) + 1;
+grid.R = mod( linspace(1,grid.Nx,grid.Nx), grid.Nx) + 1;
+grid.L = mod( linspace(-1,grid.Nx-2,grid.Nx), grid.Nx) + 1;
 
 % Build phase-space grids:
 app.f = zeros(grid.Nx,grid.Nv);
@@ -56,20 +58,42 @@ app.fm_ip_half_limit = zeros(grid.Nx,grid.Nv);
 app.F_jp_half = zeros(grid.Nx,grid.Nv);
 app.F_jm_half = zeros(grid.Nx,grid.Nv);
 
+% Make IC
+for i = 1:grid.Nx
+    for j = 1:grid.Nv
+        
+        % Grid location:
+        x = grid.x(i);
+        v = grid.v(j);
+
+        % Moments:
+        n = 1 + 0.2*sin(pi*x);
+        u = 1;
+        T = 1/(1 + 0.2*sin(pi*x));
+        
+        % Biuld f:
+        app.f(i,j) = maxwellian(n,u,T,v,app);
+        %app.f(i,j) = 0.5*maxwellian(n,u,T,v,app) + 0.3*maxwellian(n,-0.5*u,T,v,app);
+    end
+end
+
+
 % Make the Knudsen Number array
-eps0 = 10e-5;
-grid.eps = problem1_Knudsen_num(eps0,grid.x);
+app.eps0 = 10e-5;
 
 % Save the grid object to the app 
 app.grid = grid;
+
+% Save the inital distribution:
+app.f_IC = app.f;
+[n,u,T] = moments(app.f_IC,app);
+app.n_IC = n;
+app.u_IC = u;
+app.T_IC = T;
+
 
 % Add any external app functions
 
 %%% END PROBLEM 1: Vairable Knudsen Number %%%
 
-end
-
-% Knudsen Number
-function eps = problem1_Knudsen_num(eps0,x)
-    eps = eps0 + tanh(1 - 11*(x-1)) + tanh(1 + 11*(x-1)); 
 end
