@@ -1,0 +1,8 @@
+# Ignore specific file
+IMEX_Notes.pptx
+
+# Ignore temporary files that start with ~$
+~$*
+
+# Ignore all files with a .asv extension
+*.asv
