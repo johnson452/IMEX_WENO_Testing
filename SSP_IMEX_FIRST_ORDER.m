@@ -23,6 +23,13 @@ app.n_midpoint1 = n;
 app.u_midpoint1 = u;
 app.T_midpoint1 = T;
 
+
+% Also save moments for diagnostics:
+[n,u,T] = moments(f_Eq,app);
+app.n_Eq = n;
+app.u_Eq = u;
+app.T_Eq = T;
+
 % (3.34c) Quadrature evaluation, need f_star_k(x), eps(c), M(x), f_Eq(x)
 % via the reconstructed polynomials
 f_star_func = reconstruct(f_star,"x",app);
@@ -47,7 +54,6 @@ function [f_eval] = quad_eval_int(f_star_func,f_Eq_func,app)
 % Grab constants from app
 Nx = app.grid.Nx;
 Nv = app.grid.Nv;
-v = app.grid.v;
 dx = app.grid.dx;
 x = app.grid.x;
 eps0 = app.eps0;
@@ -134,7 +140,7 @@ for i = 1:Nx
             % Equation 3.42 of
             % https://epubs.siam.org/doi/epdf/10.1137/17M1144362 
             % Makes M^{n+1}/k
-            f_Eq(i,j) = f_Eq(i,j) + ((b-a)/2)*w_quad(k)*maxwellian(n,u,T,v(j),app);
+            f_Eq(i,j) = f_Eq(i,j) + (1/2)*w_quad(k)*maxwellian(n,u,T,v(j),app);
         end
     end
 end

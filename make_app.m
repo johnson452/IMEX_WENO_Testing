@@ -31,6 +31,8 @@ grid.dt = (1/24)*(grid.dx/grid.v_max);
 grid.time = grid.t_min;
 grid.NT = 1;
 grid.time_vec = [grid.t_min];
+fprintf("We expect the simulation to take: %d iterations\n",ceil(grid.t_max/grid.dt));
+
 
 % Build velocity grids:
 grid.v_plus = zeros(grid.Nv,1);
