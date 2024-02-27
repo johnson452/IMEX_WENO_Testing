@@ -13,7 +13,7 @@ Nx = app.grid.Nx;
 % (3.34a) Compute f_{j,k}^star:
 app = compute_fluxes(app);
 %TEMP: ISOLATE G integration:
-f_star = app.f;% - (dt/dx)*(app.F_jp_half - app.F_jm_half);
+f_star = app.f - (dt/dx)*(app.F_jp_half - app.F_jm_half);
 
 % (3.34b) Compute the moments (at ^{n + 1})
 [n,u,T] = moments(f_star,app);
@@ -222,18 +222,21 @@ for i = 1:Nx
 
     % See: https://en.wikipedia.org/wiki/Gaussian_quadrature
     for k = 1:N_quad
-    xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
-    n_tilde_int = n_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(n_func_tilde(:,i),xj,xi_norm);
-    u_tilde_int = u_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(u_func_tilde(:,i),xj,xi_norm);
-    T_tilde_int = T_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(T_func_tilde(:,i),xj,xi_norm);
+        xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
+        n_tilde_int = n_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(n_func_tilde(:,i),xj,xi_norm);
+        u_tilde_int = u_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(u_func_tilde(:,i),xj,xi_norm);
+        T_tilde_int = T_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(T_func_tilde(:,i),xj,xi_norm);
     end
 
     res_n = rel_diff(n_tilde_int,n(i));
     res_u = rel_diff(u_tilde_int,u(i));
     res_T = rel_diff(T_tilde_int,T(i));
-    fprintf("(MOMENTS) n_tilde_int: %1.16e, n(j): %1.16e, rel_diff: %1.16e\n",n_tilde_int,n(i),res_n);
-    fprintf("(MOMENTS) u_tilde_int: %1.16e, u(j): %1.16e, rel_diff: %1.16e\n",u_tilde_int,u(i),res_u);
-    fprintf("(MOMENTS) T_tilde_int: %1.16e, T(j): %1.16e, rel_diff: %1.16e\n",T_tilde_int,T(i),res_T);
-    fprintf("\n");
+    tol = 1e-8;
+    if res_n > tol || res_u > tol || res_T > tol
+        fprintf("(MOMENTS) n_tilde_int: %1.16e, n(j): %1.16e, rel_diff: %1.16e\n",n_tilde_int,n(i),res_n);
+        fprintf("(MOMENTS) u_tilde_int: %1.16e, u(j): %1.16e, rel_diff: %1.16e\n",u_tilde_int,u(i),res_u);
+        fprintf("(MOMENTS) T_tilde_int: %1.16e, T(j): %1.16e, rel_diff: %1.16e\n",T_tilde_int,T(i),res_T);
+        fprintf("\n");
+    end
 end
 end

@@ -7,6 +7,8 @@ function [fp_im_half,fm_ip_half,f_bar_j] = WENO(f_full,fp_im_half,fm_ip_half,dir
 % f_full is expected to be a phase space/phase-space flux: f(x,v) or
 % v*f(x,v)
 
+% Only works for 5th order!
+
 %From: https://www.sciencedirect.com/science/article/pii/S0021999109007165
 % and: https://www3.nd.edu/~zxu2/acms60790S13/Shu-WENO-notes.pdf
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -19,6 +21,11 @@ sz_f = size(f_full);
 Nx = sz_f(1);
 Nv = sz_f(2);
 f_bar_j = zeros(sz_f);
+
+% 3-point Gauss-Legandre Quad: [-1 to 1]
+N_quad = 3;
+w_quad = [5/9,8/9,5/9];
+xi_quad = [-sqrt(3/5),0,sqrt(3/5)];
 
 % Make sure we aren't calling this by accident
 if strcmp(grid.moments_type,"Simple_No_Weno_reconst_fv") == 1 && strcmp(dir,"v") ==1
@@ -66,24 +73,54 @@ for v_index = 1:Nv
             % Construct the polynomial
             pre_xr_index = linspace(i-r,i-r+k-1,k);
             xr_index = mapindex(dir,pre_xr_index,Nx);
-            xr_poly = x_ghost(Nx,xr_index,pre_xr_index,dir,dx,x); %x(xr_index);
             yr_poly = f(xr_index);
-            n = k-1;
-            pr = polyfit(xr_poly,yr_poly,n); %2.50
-            %disp(xr_poly)
+            ujm = yr_poly(1);
+            uj = yr_poly(2);
+            ujp = yr_poly(3);
 
-            % Compute v_bar_j
-            for j = i-r:i+(k - 1 - r) % s = k - 1 - r (2.9)
+            %pr = polyfit(xr_poly,yr_poly,n); %2.50, constrained by 2.9
+            a2 = (ujm - 2*uj + ujp)/(2*dx^2);
+            a1 = -(ujm - ujp)/(2*dx);
+            a0 = (13*uj)/12 - ujm/24 - ujp/24;
+            pr = [a0,a1,a2];
 
 
-                % Save Beta_r to an array
-                q = polyint(pr);
-                j_index = mapindex(dir,j,Nx);
-                xj = x_ghost(Nx,j_index,j,dir,dx,x);
-                a = xj - dx/2;
-                b = xj + dx/2;
-                f_bar_j(j_index,v_index) = (1/dx)*diff(polyval(q,[a b]));
-            end
+            % Checkpoly
+            %check_poly_second_order(pr,uj,ujm,ujp,x(i),dx)
+            
+
+            %             % Compute v_bar_j
+            %             for j = i-r:i+(k - 1 - r) % s = k - 1 - r (2.9)
+            %
+            %                 % Set the initial value to zero
+            %                 j_index = mapindex(dir,j,Nx);
+            %                 f_bar_j(j_index,v_index) = 0;
+            %
+            %                 %Iterate over quad points
+            %                 for k = 1:N_quad
+            %
+            %                     % Compute the mean value
+            %                     xj = x_ghost(Nx,j_index,j,dir,dx,x);
+            %                     a = xj - dx/2;
+            %                     b = xj + dx/2;
+            %                     xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
+            %                     f_bar_j(j_index,v_index) = f_bar_j(j_index,v_index) + ...
+            %                         (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(pr,xj,xi_norm);
+            %
+            %
+            %                 end
+            %
+            %
+            %                 % Check diff
+            %                 if rel_diff(f_bar_j(j_index,v_index),f(j_index)) > 1e-8
+            %                     fprintf("WENO fails to build poly!\n");
+            %                 end
+            %             end
+
+            % Since we've shown equiv
+            f_bar_j(xr_index,v_index) = f(xr_index);
+
+
 
             % (2.11) v_bar
             f_ip_half = 0;
@@ -359,9 +396,89 @@ end
 
 
 % function check_crj(x)
-% 
+%
 % if max(x) ~= 0 || min(x) ~= 0
 %     fprintf("Issue in crj_matrices\n");
 % end
-% 
+%
 % end
+
+
+
+% Check the polynomial fourth order matches the condtions
+function check_poly_second_order(poly,f_bar,fL_bar,fR_bar,xj,dx)
+
+% Does the edge evaluations match?
+x_jm_half = xj - dx/2;
+x_jp_half = xj + dx/2;
+
+% 3-point Gauss-Legandre Quad: [-1 to 1]
+N_quad = 3;
+w_quad = [5/9,8/9,5/9];
+xi_quad = [-sqrt(3/5),0,sqrt(3/5)];
+
+% Check the means:
+a = x_jm_half;
+b = x_jp_half;
+int_I = 0;
+for k = 1:N_quad
+    xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
+    int_I = int_I + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(poly,xj,xi_norm);
+end
+err_int = rel_diff(int_I,f_bar);
+
+% Check the means:
+a = x_jm_half-dx;
+b = x_jp_half-dx;
+int_L = 0;
+for k = 1:N_quad
+    xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
+    int_L = int_L + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(poly,xj,xi_norm);
+end
+err_L_int = rel_diff(int_L,fL_bar);
+
+% Check the means:
+a = x_jm_half+dx;
+b = x_jp_half+dx;
+int_R = 0;
+for k = 1:N_quad
+    xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
+    int_R = int_R + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(poly,xj,xi_norm);
+end
+err_R_int = rel_diff(int_R,fR_bar);
+
+tol = 1e-8;
+
+if err_int > tol || err_L_int > tol || err_R_int > tol
+
+    fprintf("(POLY 2nd-O MEAN) poly_comp: %1.16e, val: %1.16e, rel_diff: %1.16e\n",int_I,f_bar,err_int);
+    fprintf("(POLY 2nd-O MEAN L) poly_comp: %1.16e, val: %1.16e, rel_diff: %1.16e\n",int_L,fL_bar,err_L_int);
+    fprintf("(POLY 2nd-O MEAN R) poly_comp: %1.16e, val: %1.16e, rel_diff: %1.16e\n",int_R,fR_bar,err_R_int);
+    fprintf("\n");
+
+    clf()
+    x_lower = xj - 3*dx/2;
+    x_upper = xj + 3*dx/2;
+    x_span = linspace(x_lower,x_upper);
+    y_span = poly_eval(poly,xj,x_span);
+    plot(x_span,y_span,"red")
+    hold on
+    plot([xj - 3*dx/2,xj - dx/2],[fL_bar,fL_bar],"black")
+    hold on
+    plot([xj - dx/2,xj + dx/2],[f_bar,f_bar],"black")
+    hold on
+    plot([xj + dx/2,xj + 3*dx/2],[fR_bar,fR_bar],"black")
+    hold on
+    plot(xj-dx,int_L,"*red")
+    hold on
+    plot(xj,int_I,"*red")
+    hold on
+    plot(xj+dx,int_R,"*red")
+
+    xlabel("x [arb].")
+    ylabel("y [arb].")
+
+    fprintf("\n");
+end
+
+end
