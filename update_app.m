@@ -14,6 +14,6 @@ grid.time_vec = [grid.time_vec,grid.time];
 app.grid = grid;
 
 % Output the 
-fprintf("[%1.2f %%] Iteration (%d)\n",grid.time/grid.t_max,app.grid.NT)
+fprintf("[%1.1f %%] Iteration (%d)\n",100*grid.time/grid.t_max,app.grid.NT)
 
 end

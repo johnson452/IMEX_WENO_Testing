@@ -14,7 +14,7 @@ clf()
 subplot(2,3,1)
 f = app.f_IC;
 [X,V] = meshgrid(app.grid.x,app.grid.v);
-contourf(X',V',f)
+contourf(X',V',f,50,'edgecolor','none')
 title("f(x,v) (I.C.)")
 xlabel("x")
 ylabel("v")
@@ -23,7 +23,7 @@ ylabel("v")
 subplot(2,3,2)
 f = app.f;
 [X,V] = meshgrid(app.grid.x,app.grid.v);
-contourf(X',V',f)
+contourf(X',V',f,50,'edgecolor','none')
 title("f(x,v)")
 xlabel("x")
 ylabel("v")

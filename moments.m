@@ -36,18 +36,20 @@ end
 % Simple moments where we do not polynomial reconstruct in velocity space
 function [n,nu,nu_sq] = simple_moments(f,app)
 
+%sz f
+sz_f = size(f);
+
 % Grab quantities
 v = app.grid.v;
-Nx = app.grid.Nx;
 dv = app.grid.dv;
 
 % Build moment arrays
-n = zeros(Nx,1);
-nu = zeros(Nx,1);
-nu_sq = zeros(Nx,1);
+n = zeros(sz_f(1),1);
+nu = zeros(sz_f(1),1);
+nu_sq = zeros(sz_f(1),1);
 
 % Iterate over the whole grid
-for i = 1:Nx
+for i = 1:sz_f(1)
     n(i) = dv*sum(f(i,:));
     nu(i) = dv*sum(v.*f(i,:));
     nu_sq(i) = dv*sum(v.*v.*f(i,:));

@@ -62,7 +62,7 @@ app.fm_ip_half_limit = zeros(grid.Nx,grid.Nv);
 app.F_jp_half = zeros(grid.Nx,grid.Nv);
 app.F_jm_half = zeros(grid.Nx,grid.Nv);
 
-% Make IC
+% % Make IC - Knuudsen Number Problem
 for i = 1:grid.Nx
     for j = 1:grid.Nv
         
@@ -81,6 +81,30 @@ for i = 1:grid.Nx
         %app.f(i,j) = 0.5*maxwellian(n,u,T,v,app) + 0.3*maxwellian(n,-0.5*u,T,v,app);
     end
 end
+
+% Make IC - Phase Mixing
+% for i = 1:grid.Nx
+%     for j = 1:grid.Nv
+%         
+%         % Grid location:
+%         x = grid.x(i);
+%         v = grid.v(j);
+% 
+%         % Moments:
+%         n = 1;
+%         u = 1;
+%         T = 1;
+%         
+%         % Biuld f:
+%         sin_term = 0.2*sin(4*pi*x*((grid.Lx-grid.dx)/grid.Lx));
+%         app.f(i,j) = 0.001*maxwellian(n,u,T,v,app);
+%         
+%         % Add inital distribution
+%         if abs(v) < 7 && sin_term > 0
+%             app.f(i,j) = app.f(i,j) + 1;
+%         end
+%     end
+% end
 
 
 % Make the Knudsen Number array
