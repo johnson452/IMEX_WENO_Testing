@@ -3,6 +3,13 @@ function [app] = diagnostics(app)
 
 clf()
 
+% Verf Periodic IC.
+% plot(app.grid.x,app.f,"r")
+% hold on
+% plot(app.grid.x - max(app.grid.x)-app.grid.dx,app.f,"b*")
+% hold on
+% plot(app.grid.x + max(app.grid.x)+app.grid.dx,app.f,"g*")
+
 % Create plots:
 subplot(2,3,1)
 f = app.f_IC;

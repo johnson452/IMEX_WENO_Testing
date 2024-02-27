@@ -36,6 +36,9 @@ f_star_func = reconstruct(f_star,"x",app);
 f_Eq_func = reconstruct(f_Eq,"x",app);
 app.f = (1/dx)*quad_eval_int(f_star_func,f_Eq_func, app);
 
+% TEMP OVERWRITE:
+app.f = f_star;
+
 % Also save moments for diagnostics:
 [n,u,T] = moments(app.f,app);
 app.n = n;

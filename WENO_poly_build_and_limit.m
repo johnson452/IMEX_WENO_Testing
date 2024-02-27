@@ -40,14 +40,14 @@ for v_index = 1:Nv
     for j = 1:Nx
 
         % Periodic domains:
-        jm = mapindex(j-1,Nx);
-        jp = mapindex(j+1,Nx);
+        jm = mapindex(dir,j-1,Nx);
+        jp = mapindex(dir,j+1,Nx);
 
         % Compute poly coeff
         a0 = (1/192)*(f_bar(jm,v_index) + 298*f_bar(j,v_index) + f_bar(jp,v_index) - 54*(fp_im_half(j,v_index) + fm_ip_half(j,v_index)));
         a1 = (1/(8*dx))*(f_bar(jm,v_index) - f_bar(jp,v_index) - 10*(fp_im_half(j,v_index) - fm_ip_half(j,v_index)));
         a2 = (1/(8*dx^2))*( -(f_bar(jm,v_index) + 58*f_bar(j,v_index) + f_bar(jp,v_index)) + 30*(fp_im_half(j,v_index) + fm_ip_half(j,v_index)));
-        a3 = (1/(8*dx^3))*(f_bar(jp,v_index) - f_bar(jm,v_index) +2*(fp_im_half(j,v_index) - fm_ip_half(j,v_index)));
+        a3 = (1/(dx^3))*(f_bar(jp,v_index) - f_bar(jm,v_index) +2*(fp_im_half(j,v_index) - fm_ip_half(j,v_index)));
         a4 = (1/(12*dx^4))*( (5*f_bar(jm,v_index) + 50*f_bar(j,v_index) + 5*f_bar(jp,v_index)) - 30*(fp_im_half(j,v_index) + fm_ip_half(j,v_index)));
 
         % Poly eval:
@@ -81,17 +81,4 @@ function val = sigma(mj,f_bar_j)
 % Compute sigma via 2.8
 val = min([abs((f_bar_j)/(mj - f_bar_j)),1]);
 
-end
-
-
-% Map the the grid indices
-function [x] = mapindex(x,Nx)
-for i = 1:max(size(x))
-    if (x(i) > Nx)
-        x(i) = x(i) - Nx;
-    end
-    if (x(i) < 1)
-        x(i) = x(i) + Nx;
-    end
-end
 end

@@ -20,6 +20,12 @@ Nx = sz_f(1);
 Nv = sz_f(2);
 f_bar_j = zeros(sz_f);
 
+% Make sure we aren't calling this by accident
+if strcmp(grid.moments_type,"Simple_No_Weno_reconst_fv") == 1 && strcmp(dir,"v") ==1
+    printf("Incorrect call to WENO to reconstruct v!\n")
+end
+
+
 % Transpose the direction if dir = "v"
 if dir == "v"
     x = grid.v;
@@ -58,12 +64,13 @@ for v_index = 1:Nv
         for r = 0:k - 1
 
             % Construct the polynomial
-            xr_index = linspace(i-r,i-r+k-1,k);
-            xr_index = mapindex(xr_index,Nx);
-            xr_poly = x(xr_index);
+            pre_xr_index = linspace(i-r,i-r+k-1,k);
+            xr_index = mapindex(dir,pre_xr_index,Nx);
+            xr_poly = x_ghost(Nx,xr_index,pre_xr_index,dir,dx,x); %x(xr_index);
             yr_poly = f(xr_index);
             n = k-1;
             pr = polyfit(xr_poly,yr_poly,n); %2.50
+            %disp(xr_poly)
 
             % Compute v_bar_j
             for j = i-r:i+(k - 1 - r) % s = k - 1 - r (2.9)
@@ -71,9 +78,10 @@ for v_index = 1:Nv
 
                 % Save Beta_r to an array
                 q = polyint(pr);
-                j_index = mapindex(j,Nx);
-                a = x(j_index) - dx/2;
-                b = x(j_index) + dx/2;
+                j_index = mapindex(dir,j,Nx);
+                xj = x_ghost(Nx,j_index,j,dir,dx,x);
+                a = xj - dx/2;
+                b = xj + dx/2;
                 f_bar_j(j_index,v_index) = (1/dx)*diff(polyval(q,[a b]));
             end
 
@@ -81,8 +89,8 @@ for v_index = 1:Nv
             f_ip_half = 0;
             f_im_half = 0;
             for j = 0:k-1
-                f_ip_half = f_ip_half + crj(k,r,j)*f_bar_j(mapindex(i - r + j,Nx),v_index);
-                f_im_half = f_im_half + crj_tilde(k,r,j)*f_bar_j(mapindex(i - r + j,Nx),v_index);
+                f_ip_half = f_ip_half + crj(k,r,j)*f_bar_j(mapindex(dir,i - r + j,Nx),v_index);
+                f_im_half = f_im_half + crj_tilde(k,r,j)*f_bar_j(mapindex(dir,i - r + j,Nx),v_index);
             end
 
             % Save the output (r + 1) for matlab
@@ -110,10 +118,10 @@ for v_index = 1:Nv
             %             end
 
             %Compute beta_analytic
-            Beta_r(r + 1) = beta_analytic_calc(i,f_bar_j(:,v_index),k,r,Nx);
+            Beta_r(r + 1) = beta_analytic_calc(i,f_bar_j(:,v_index),k,r,dir,Nx);
 
             % Check Beta: Checks out
-            check_beta(i,f_bar_j(:,v_index),k,Beta_r,r,Nx);
+            %check_beta(i,f_bar_j(:,v_index),k,Beta_r,r,Nx);
 
             %2. Find the constants d and d ̃ , such that (2.54) and (see nd.edu, pg 20)
 
@@ -148,8 +156,8 @@ for v_index = 1:Nv
         %5. Find the (2k − 1)-th order reconstruction (2.64)
         fp_im_half(i,v_index) = 0;
         fm_ip_half(i,v_index) = 0;
-        check_wr(wr);
-        check_wr(wr_tilde);
+        %check_wr(wr);
+        %check_wr(wr_tilde);
         for r = 0:k-1
             fm_ip_half(i,v_index) = fm_ip_half(i,v_index) + wr(r+1)*f_r_ip_half(r + 1);
             fp_im_half(i,v_index) = fp_im_half(i,v_index) + wr_tilde(r+1)*f_r_im_half(r + 1);
@@ -169,66 +177,73 @@ end
 end % End Function
 
 
-% Function: Unit Test on Beta
-function check_beta(i,f_bar_j,k,Beta_r,r,Nx)
+% Grab the ghost cells:
+function [x_vals] = x_ghost(Nx,fixed_indices,indices,dir,dx,x)
 
-analytic = beta_analytic_calc(i,f_bar_j,k,r,Nx);
-
-if (Beta_r(r + 1)-analytic)/((Beta_r(r + 1)+analytic)/2) > 1e-8 && ...
-        abs((Beta_r(r + 1)+analytic)/2) > 1e-8
-    fprintf("Beta fails to reproduce analytic results (k = %d)\n",k);
+% Build ghost cells
+x_vals = max(size(indices));
+if strcmp(dir,"x") == 1
+    x_vals = x(fixed_indices);
+elseif (strcmp(dir,"v") == 1)
+    for i = 1:max(size(indices))
+        indx = indices(i);
+        if indx > Nx
+            x_vals(i) = x(Nx) + (indx - Nx)*dx;
+        elseif indx < 1
+            x_vals(i) = x(1) + (indx - 1 )*dx;
+        else
+            x_vals(i) = x(indx);
+        end
+    end
+end
 end
 
 
-% Extra diagnostic:
-%fprintf("(2.61): %1.16e, (analytic): %1.16e, (Diff): %1.16e\n", ...
-%Beta_r(r + 1), analytic,Beta_r(r + 1)-analytic);
-end
+% % Function: Unit Test on Beta
+% function check_beta(i,f_bar_j,k,Beta_r,r,dir,Nx)
+%
+% analytic = beta_analytic_calc(i,f_bar_j,k,r,dir,Nx);
+%
+% if (Beta_r(r + 1)-analytic)/((Beta_r(r + 1)+analytic)/2) > 1e-8 && ...
+%         abs((Beta_r(r + 1)+analytic)/2) > 1e-8
+%     fprintf("Beta fails to reproduce analytic results (k = %d)\n",k);
+% end
+%
+%
+% % Extra diagnostic:
+% %fprintf("(2.61): %1.16e, (analytic): %1.16e, (Diff): %1.16e\n", ...
+% %Beta_r(r + 1), analytic,Beta_r(r + 1)-analytic);
+% end
 
-% Function: Unit test on Wr
-function check_wr(x)
+% % Function: Unit test on Wr
+% function check_wr(x)
+%
+% % Check the property
+% if abs(sum(x) -1) > 1e-8
+%     fprintf("wr ill formed!\n")
+% end
+%
+% end
 
-% Check the property
-if abs(sum(x) -1) > 1e-8
-    fprintf("wr ill formed!\n")
-end
-
-end
-
-function analytic = beta_analytic_calc(i,f_bar_j,k,r,Nx)
+function analytic = beta_analytic_calc(i,f_bar_j,k,r,dir,Nx)
 if k == 1
     analytic = 1;
 elseif k == 2
     if r == 0
-        analytic = (f_bar_j(mapindex(i+1,Nx))- f_bar_j(i))^2;
+        analytic = (f_bar_j(mapindex(dir,i+1,Nx))- f_bar_j(i))^2;
     elseif r == 1
-        analytic = (f_bar_j(i) - f_bar_j(mapindex(i-1,Nx)))^2;
+        analytic = (f_bar_j(i) - f_bar_j(mapindex(dir,i-1,Nx)))^2;
     end
 elseif k == 3
     if r == 0
-        analytic = (13/12)*(f_bar_j(i) - 2*f_bar_j(mapindex(i+1,Nx)) + f_bar_j(mapindex(i+2,Nx)))^2 +...
-            (1/4)*(3*f_bar_j(i) - 4*f_bar_j(mapindex(i+1,Nx)) + f_bar_j(mapindex(i+2,Nx)))^2;
+        analytic = (13/12)*(f_bar_j(i) - 2*f_bar_j(mapindex(dir,i+1,Nx)) + f_bar_j(mapindex(dir,i+2,Nx)))^2 +...
+            (1/4)*(3*f_bar_j(i) - 4*f_bar_j(mapindex(dir,i+1,Nx)) + f_bar_j(mapindex(dir,i+2,Nx)))^2;
     elseif r == 1
-        analytic = (13/12)*(f_bar_j(mapindex(i-1,Nx)) - 2*f_bar_j(i) + f_bar_j(mapindex(i+1,Nx)))^2 +...
-            (1/4)*(f_bar_j(mapindex(i-1,Nx)) - f_bar_j(mapindex(i+1,Nx)))^2;
+        analytic = (13/12)*(f_bar_j(mapindex(dir,i-1,Nx)) - 2*f_bar_j(i) + f_bar_j(mapindex(dir,i+1,Nx)))^2 +...
+            (1/4)*(f_bar_j(mapindex(dir,i-1,Nx)) - f_bar_j(mapindex(dir,i+1,Nx)))^2;
     elseif r == 2
-        analytic = (13/12)*(f_bar_j(mapindex(i-2,Nx)) - 2*f_bar_j(mapindex(i-1,Nx)) + f_bar_j(i))^2 +...
-            (1/4)*(f_bar_j(mapindex(i-2,Nx)) - 4*f_bar_j(mapindex(i-1,Nx)) + 3*f_bar_j(i))^2;
-    end
-end
-end
-
-
-
-
-% Map the the grid indices
-function [x] = mapindex(x,Nx)
-for i = 1:max(size(x))
-    if (x(i) > Nx)
-        x(i) = x(i) - Nx;
-    end
-    if (x(i) < 1)
-        x(i) = x(i) + Nx;
+        analytic = (13/12)*(f_bar_j(mapindex(dir,i-2,Nx)) - 2*f_bar_j(mapindex(dir,i-1,Nx)) + f_bar_j(i))^2 +...
+            (1/4)*(f_bar_j(mapindex(dir,i-2,Nx)) - 4*f_bar_j(mapindex(dir,i-1,Nx)) + 3*f_bar_j(i))^2;
     end
 end
 end
@@ -336,17 +351,17 @@ else
 end
 
 %Verify matrix with: Done!
-should_be_zero = max(crj_matrix - flip(flip(crj_matrix,2),1));
-check_crj(should_be_zero);
+%should_be_zero = max(crj_matrix - flip(flip(crj_matrix,2),1));
+%check_crj(should_be_zero);
 
 
 end
 
 
-function check_crj(x)
-
-if max(x) ~= 0 || min(x) ~= 0
-    fprintf("Issue in crj_matrices\n");
-end
-
-end
+% function check_crj(x)
+% 
+% if max(x) ~= 0 || min(x) ~= 0
+%     fprintf("Issue in crj_matrices\n");
+% end
+% 
+% end

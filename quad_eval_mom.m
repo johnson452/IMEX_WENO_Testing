@@ -47,21 +47,3 @@ for i = 1:Nx
     end
 end
 end
-
-
-% Multiply the kernel:
-function [poly_res] = poly_multiply(p1,p2)
-
-% Multiply the kernel
-sz_poly1 = max(size(p1));
-sz_poly2 = max(size(p2));
-poly_res = zeros(sz_poly2+sz_poly1 - 1,1);
-
-% Iterate over all combinations
-for i = 1:sz_poly1
-    for j = 1:sz_poly2
-        poly_res(i+j-1) = poly_res(i+j-1) + p1(i)*p2(j);
-    end
-end
-
-end

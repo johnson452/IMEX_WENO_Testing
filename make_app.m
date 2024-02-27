@@ -6,6 +6,7 @@ function [app] = make_app()
 %%% START PROBLEM 1: Variable Knudsen Number %%%
 % Periodic BC
 grid.WENO_order = 3;
+grid.moments_type = "Simple_No_Weno_reconst_fv"; %,"WENO_Reconstructed_fv";
 
 % Constants
 app.m0 = 1;
@@ -18,6 +19,7 @@ grid.x_min = 0;
 grid.x_max = 2;
 grid.x = linspace(grid.x_min,grid.x_max,grid.Nx);
 grid.dx = grid.x(2) - grid.x(1);
+grid.Lx = grid.x_max - grid.x_min;
 % Velocity:
 grid.v_max = 15;
 grid.v_min = -grid.v_max;
@@ -27,7 +29,7 @@ grid.dv = grid.v(2) - grid.v(1);
 % Time:
 grid.t_min = 0.0;
 grid.t_max = 0.5;
-grid.dt = (1/24)*(grid.dx/grid.v_max);
+grid.dt = (1/24)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
 grid.time = grid.t_min;
 grid.NT = 1;
 grid.time_vec = [grid.t_min];
@@ -69,9 +71,10 @@ for i = 1:grid.Nx
         v = grid.v(j);
 
         % Moments:
-        n = 1 + 0.2*sin(pi*x);
+        sin_term = 0.2*sin(pi*x*((grid.Lx-grid.dx)/grid.Lx));
+        n = 1 + sin_term;
         u = 1;
-        T = 1/(1 + 0.2*sin(pi*x));
+        T = 1/(1 + sin_term);
         
         % Biuld f:
         app.f(i,j) = maxwellian(n,u,T,v,app);

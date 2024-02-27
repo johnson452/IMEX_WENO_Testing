@@ -11,6 +11,8 @@ close all
 %Order for testing
 for k = 1:3
     grid.WENO_order = k;
+    grid.moments_type = "WENO_Reconstructed_fv";
+
 
     %%% WENO TESTING %%%
     grid.Nx = 7;
@@ -47,7 +49,7 @@ for k = 1:3
 
     % Smooth test:
     for i = 1:Nx
-        f_full(i) = sin(2*pi*grid.x(i)/(grid.Lx+grid.dx));
+        f_full(i) = 1.0 + sin(2*pi*grid.x(i)/(grid.Lx+grid.dx));
     end
 
     %Discontinuity:
@@ -72,7 +74,7 @@ for k = 1:3
     x_exact = linspace(grid.x_min,grid.x_max,Nx_exact);
     dx_exact = x_exact(2) - x_exact(1);
     for i = 1:Nx_exact
-        f_exact(i) = sin(2*pi*x_exact(i)/(grid.Lx+grid.dx));
+        f_exact(i) = 1 + sin(2*pi*x_exact(i)/(grid.Lx+grid.dx));
     end
 
 
