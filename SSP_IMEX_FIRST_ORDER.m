@@ -176,7 +176,7 @@ dir = "x";
 
 % Compute fluxes via upwind 3.37
 for i = 1:app.grid.Nx
-    for j = app.grid.Nv
+    for j = 1:app.grid.Nv
         app.F_jp_half(i,j) = app.grid.v_plus(j)*app.fm_ip_half_limit(i,j) + app.grid.v_minus(j)*app.fp_im_half_limit(app.grid.R(i),j);
     end
 end
