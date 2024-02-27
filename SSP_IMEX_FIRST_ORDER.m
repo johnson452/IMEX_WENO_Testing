@@ -6,17 +6,19 @@ function app = SSP_IMEX_FIRST_ORDER(app)
 grid = app.grid;
 dx = grid.dx;
 dt = grid.dt;
+Nx = app.grid.Nx;
 
 %%% START IMEX SPP-Rk1 %%%
 
 % (3.34a) Compute f_{j,k}^star:
 app = compute_fluxes(app);
 %TEMP: ISOLATE G integration:
-f_star = app.f; % - (dt/dx)*(app.F_jp_half - app.F_jm_half);
+f_star = app.f;% - (dt/dx)*(app.F_jp_half - app.F_jm_half);
 
 % (3.34b) Compute the moments (at ^{n + 1})
 [n,u,T] = moments(f_star,app);
 [n_func_tilde,u_func_tilde,T_func_tilde] = avg_to_func_moms(n,u,T,app);
+check_moments(n_func_tilde,u_func_tilde,T_func_tilde,n,u,T, Nx,dx,app.grid.x);
 f_Eq = equilibrium(n_func_tilde,u_func_tilde,T_func_tilde,app);
 
 % Also save moments for diagnostics:
@@ -191,4 +193,47 @@ end
 % Periodic domain, build left
 app.F_jm_half = app.F_jp_half(app.grid.L,:);
 
+end
+
+
+
+% CHECKS FOR THE CODE:
+function check_moments(n_func_tilde,u_func_tilde,T_func_tilde,n,u,T,Nx,dx,x)
+
+% Verify 3.41
+
+% 3-point Gauss-Legandre Quad: [-1 to 1]
+N_quad = 3;
+w_quad = [5/9,8/9,5/9];
+xi_quad = [-sqrt(3/5),0,sqrt(3/5)];
+
+% Compute the relative diff
+for i = 1:Nx
+
+    % Bounds
+    a = x(i)-dx/2;
+    b = x(i)+dx/2;
+    xj = x(i);
+
+    % Reset the values:
+    n_tilde_int = 0;
+    u_tilde_int = 0;
+    T_tilde_int = 0;
+
+    % See: https://en.wikipedia.org/wiki/Gaussian_quadrature
+    for k = 1:N_quad
+    xi_norm = ((b-a)/2)*xi_quad(k) + ((b+a)/2);
+    n_tilde_int = n_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(n_func_tilde(:,i),xj,xi_norm);
+    u_tilde_int = u_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(u_func_tilde(:,i),xj,xi_norm);
+    T_tilde_int = T_tilde_int + (1/dx)*((b-a)/2)*w_quad(k)*poly_eval(T_func_tilde(:,i),xj,xi_norm);
+    end
+
+    res_n = rel_diff(n_tilde_int,n(i));
+    res_u = rel_diff(u_tilde_int,u(i));
+    res_T = rel_diff(T_tilde_int,T(i));
+    fprintf("(MOMENTS) n_tilde_int: %1.16e, n(j): %1.16e, rel_diff: %1.16e\n",n_tilde_int,n(i),res_n);
+    fprintf("(MOMENTS) u_tilde_int: %1.16e, u(j): %1.16e, rel_diff: %1.16e\n",u_tilde_int,u(i),res_u);
+    fprintf("(MOMENTS) T_tilde_int: %1.16e, T(j): %1.16e, rel_diff: %1.16e\n",T_tilde_int,T(i),res_T);
+    fprintf("\n");
+end
 end

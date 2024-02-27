@@ -77,10 +77,29 @@ for i = 1:grid.Nx
         T = 1/(1 + sin_term);
         
         % Biuld f:
-        app.f(i,j) = maxwellian(n,u,T,v,app);
-        %app.f(i,j) = 0.5*maxwellian(n,u,T,v,app) + 0.3*maxwellian(n,-0.5*u,T,v,app);
+        %app.f(i,j) = maxwellian(n,u,T,v,app);
+        app.f(i,j) = 0.5*maxwellian(n,u,T,v,app) + 0.3*maxwellian(n,-0.5*u,T,v,app);
     end
 end
+
+% % Make IC - Bi-Maxwellian
+% for i = 1:grid.Nx
+%     for j = 1:grid.Nv
+%         
+%         % Grid location:
+%         x = grid.x(i);
+%         v = grid.v(j);
+% 
+%         % Moments:
+%         n = 1;
+%         u = 1;
+%         T = 1;
+%         
+%         % Biuld f:
+%         app.f(i,j) = maxwellian(n,u,T,v,app) + maxwellian(n,-u,T,v,app);
+%         %app.f(i,j) = 0.5*maxwellian(n,u,T,v,app) + 0.3*maxwellian(n,-0.5*u,T,v,app);
+%     end
+% end
 
 % Make IC - Phase Mixing
 % for i = 1:grid.Nx
