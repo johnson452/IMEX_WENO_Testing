@@ -1,7 +1,6 @@
 function [app] = diagnostics(app)
 % Creates the diagnostics for our problem
 
-clf()
 
 % Verf Periodic IC.
 % plot(app.grid.x,app.f,"r")
@@ -9,6 +8,13 @@ clf()
 % plot(app.grid.x - max(app.grid.x)-app.grid.dx,app.f,"b*")
 % hold on
 % plot(app.grid.x + max(app.grid.x)+app.grid.dx,app.f,"g*")
+
+if mod(app.grid.NT,app.grid.diag_interval) == 0 || ...
+        app.grid.time - app.grid.dt >= app.grid.t_max ||...
+        app.grid.NT == 1
+
+
+clf()
 
 % Create plots:
 subplot(2,3,1)
@@ -67,6 +73,7 @@ xlabel("x")
 ylabel("T")
 legend("T(t)","T_{mid}","T_{Eq}","T_{I.C.}")
 
+end
 
 pause(0.1)
 

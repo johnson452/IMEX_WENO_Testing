@@ -14,7 +14,7 @@ app.kb = 1;
 
 % Build the grid object
 % Spatial:
-grid.Nx = 40;
+grid.Nx = 80;
 grid.x_min = 0;
 grid.x_max = 2;
 grid.x = linspace(grid.x_min,grid.x_max,grid.Nx);
@@ -29,10 +29,11 @@ grid.dv = grid.v(2) - grid.v(1);
 % Time:
 grid.t_min = 0.0;
 grid.t_max = 0.5;
-grid.dt = (1/24)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
+grid.dt = (1/96)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
 grid.time = grid.t_min;
 grid.NT = 1;
 grid.time_vec = [grid.t_min];
+grid.diag_interval  = 30;
 fprintf("We expect the simulation to take: %d iterations\n",ceil(grid.t_max/grid.dt));
 
 

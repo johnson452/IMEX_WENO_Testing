@@ -73,16 +73,16 @@ for v_index = 1:Nv
             % Construct the polynomial
             pre_xr_index = linspace(i-r,i-r+k-1,k);
             xr_index = mapindex(dir,pre_xr_index,Nx);
-            yr_poly = f(xr_index);
-            ujm = yr_poly(1);
-            uj = yr_poly(2);
-            ujp = yr_poly(3);
+            %yr_poly = f(xr_index);
+            %ujm = yr_poly(1);
+            %uj = yr_poly(2);
+            %ujp = yr_poly(3);
 
             %pr = polyfit(xr_poly,yr_poly,n); %2.50, constrained by 2.9
-            a2 = (ujm - 2*uj + ujp)/(2*dx^2);
-            a1 = -(ujm - ujp)/(2*dx);
-            a0 = (13*uj)/12 - ujm/24 - ujp/24;
-            pr = [a0,a1,a2];
+            %a2 = (ujm - 2*uj + ujp)/(2*dx^2);
+            %a1 = -(ujm - ujp)/(2*dx);
+            %a0 = (13*uj)/12 - ujm/24 - ujp/24;
+            %pr = [a0,a1,a2];
 
 
             % Checkpoly
