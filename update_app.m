@@ -12,6 +12,8 @@ if strcmp(grid.scheme,"JHU_FO") == 1
     app = SSP_IMEX_FIRST_ORDER(app);
 elseif strcmp(grid.scheme,"JHU_SO") == 1
     app = SSP_IMEX_SECOND_ORDER(app);
+elseif strcmp(grid.scheme,"SSP_RK3_EXPLICIT") == 1
+    app = SSP_RK3_EXPLICIT(app);
 else
     fprintf("No advancement method chosen!\n");
 end

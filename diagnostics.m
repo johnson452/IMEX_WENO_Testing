@@ -76,7 +76,8 @@ xlabel("x")
 ylabel("T")
 legend("T(t)","T_{mid}","T_{Eq}","T_{I.C.}")
 
-elseif strcmp(app.grid.scheme,"JHU_SO") == 1
+elseif strcmp(app.grid.scheme,"JHU_SO") == 1 ||...
+        strcmp(app.grid.scheme,"SSP_RK3_EXPLICIT") == 1
 
 
 subplot(2,3,3)
