@@ -7,6 +7,7 @@ function [app] = make_app()
 % Periodic BC
 grid.WENO_order = 3;
 grid.moments_type = "Simple_No_Weno_reconst_fv"; %,"WENO_Reconstructed_fv";
+grid.scheme = "JHU_FO"; %"SSP_RK3_EXPLICIT"; % "JHU_SO"; % "JHU_FO"
 
 % Constants
 app.m0 = 1;
@@ -32,8 +33,15 @@ grid.t_max = 0.5;
 grid.dt = (1/24)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
 grid.time = grid.t_min;
 grid.NT = 1;
+grid.NT_est = ceil(grid.t_max/grid.dt);
 grid.time_vec = [grid.t_min];
+grid.diag_interval  = 30;
 fprintf("We expect the simulation to take: %d iterations\n",ceil(grid.t_max/grid.dt));
+
+% Save total moments vs time
+grid.n_t = zeros(1,grid.NT_est);
+grid.nu_t = zeros(1,grid.NT_est);
+grid.nT_t = zeros(1,grid.NT_est);
 
 
 % Build velocity grids:
@@ -127,7 +135,7 @@ end
 
 
 % Make the Knudsen Number array
-app.eps0 = 10e-5;
+app.eps0 = 1e-5;
 
 % Save the grid object to the app 
 app.grid = grid;

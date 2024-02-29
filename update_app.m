@@ -4,8 +4,12 @@ function [app] = update_app(app)
 % Grab the grid:
 grid = app.grid;
 
+tic
+
 % Call the time-integration method:
 app = SSP_IMEX_FIRST_ORDER(app);
+
+toc
 
 % Push the time, save grid changes
 grid.time = grid.time + grid.dt;

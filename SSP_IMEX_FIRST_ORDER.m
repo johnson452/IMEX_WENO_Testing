@@ -18,7 +18,7 @@ f_star = app.f - (dt/dx)*(app.F_jp_half - app.F_jm_half);
 % (3.34b) Compute the moments (at ^{n + 1})
 [n,u,T] = moments(f_star,app);
 [n_func_tilde,u_func_tilde,T_func_tilde] = avg_to_func_moms(n,u,T,app);
-check_moments(n_func_tilde,u_func_tilde,T_func_tilde,n,u,T, Nx,dx,app.grid.x);
+%check_moments(n_func_tilde,u_func_tilde,T_func_tilde,n,u,T, Nx,dx,app.grid.x);
 f_Eq = equilibrium(n_func_tilde,u_func_tilde,T_func_tilde,app);
 
 % Also save moments for diagnostics:
