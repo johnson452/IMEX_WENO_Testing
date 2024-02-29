@@ -7,6 +7,7 @@ function [app] = make_app()
 % Periodic BC
 grid.WENO_order = 3;
 grid.moments_type = "Simple_No_Weno_reconst_fv"; %,"WENO_Reconstructed_fv";
+grid.scheme = "JHU_SO"; % "JHU_FO"
 
 % Constants
 app.m0 = 1;
@@ -14,7 +15,7 @@ app.kb = 1;
 
 % Build the grid object
 % Spatial:
-grid.Nx = 80;
+grid.Nx = 40;
 grid.x_min = 0;
 grid.x_max = 2;
 grid.x = linspace(grid.x_min,grid.x_max,grid.Nx);
@@ -29,7 +30,7 @@ grid.dv = grid.v(2) - grid.v(1);
 % Time:
 grid.t_min = 0.0;
 grid.t_max = 0.5;
-grid.dt = (1/13)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
+grid.dt = (1/24)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
 grid.time = grid.t_min;
 grid.NT = 1;
 grid.time_vec = [grid.t_min];

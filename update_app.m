@@ -8,7 +8,13 @@ grid = app.grid;
 tic
 
 % Call the time-integration method:
-app = SSP_IMEX_FIRST_ORDER(app);
+if strcmp(grid.scheme,"JHU_FO") == 1
+    app = SSP_IMEX_FIRST_ORDER(app);
+elseif strcmp(grid.scheme,"JHU_SO") == 1
+    app = SSP_IMEX_SECOND_ORDER(app);
+else
+    fprintf("No advancement method chosen!\n");
+end
 
 % End time
 toc
@@ -19,7 +25,7 @@ grid.NT = grid.NT + 1;
 grid.time_vec = [grid.time_vec,grid.time];
 app.grid = grid;
 
-% Output the 
+% Output the
 fprintf("[%1.1f %%] Iteration (%d)\n",100*grid.time/grid.t_max,app.grid.NT)
 
 end

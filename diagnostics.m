@@ -34,6 +34,9 @@ title("f(x,v)")
 xlabel("x")
 ylabel("v")
 
+if strcmp(app.grid.scheme,"JHU_FO") == 1
+    app = SSP_IMEX_FIRST_ORDER(app);
+
 subplot(2,3,3)
 plot(app.grid.x,app.n)
 hold on
@@ -72,6 +75,56 @@ title("T(x)")
 xlabel("x")
 ylabel("T")
 legend("T(t)","T_{mid}","T_{Eq}","T_{I.C.}")
+
+elseif strcmp(app.grid.scheme,"JHU_SO") == 1
+
+
+subplot(2,3,3)
+plot(app.grid.x,app.n)
+hold on
+plot(app.grid.x,app.n_midpoint1)
+hold on
+plot(app.grid.x,app.n_midpoint2)
+hold on
+plot(app.grid.x,app.n_midpoint3)
+hold on
+plot(app.grid.x,app.n_IC)
+title("n(x)")
+xlabel("x")
+ylabel("n")
+legend("n(x)","n_{stage-1}","n_{stage-2}","n_{stage-3}","n_{I.C.}")
+
+subplot(2,3,4)
+plot(app.grid.x,app.u)
+hold on
+plot(app.grid.x,app.u_midpoint1)
+hold on
+plot(app.grid.x,app.u_midpoint2)
+hold on
+plot(app.grid.x,app.u_midpoint3)
+hold on
+plot(app.grid.x,app.u_IC)
+title("u(x)")
+xlabel("x")
+ylabel("u")
+legend("u(x)","u_{stage-1}","u_{stage-2}","u_{stage-3}","u_{I.C.}")
+
+subplot(2,3,5)
+plot(app.grid.x,app.T)
+hold on
+plot(app.grid.x,app.T_midpoint1)
+hold on
+plot(app.grid.x,app.T_midpoint2)
+hold on
+plot(app.grid.x,app.T_midpoint3)
+hold on
+plot(app.grid.x,app.T_IC)
+title("T(x)")
+xlabel("x")
+ylabel("T")
+legend("T(x)","T_{stage-1}","T_{stage-2}","T_{stage-3}","T_{I.C.}")
+
+end
 
 end
 
