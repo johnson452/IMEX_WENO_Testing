@@ -1,4 +1,4 @@
-function [fp_im_half,fm_ip_half,f_bar_j] = WENO(f_full,fp_im_half,fm_ip_half,dir,grid)
+function [fp_im_half,fm_ip_half,f_bar_j] = WENO(f_bar_j,fp_im_half,fm_ip_half,dir,grid)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This function takes f (cell averages) and the grid, and returns
 % Cell: |i-1/2     i     i+1/2|
@@ -15,17 +15,9 @@ function [fp_im_half,fm_ip_half,f_bar_j] = WENO(f_full,fp_im_half,fm_ip_half,dir
 
 % Grab certain quantities
 k = grid.WENO_order;
-x = grid.x;
-dx = grid.dx;
-sz_f = size(f_full);
+sz_f = size(f_bar_j);
 Nx = sz_f(1);
 Nv = sz_f(2);
-f_bar_j = zeros(sz_f);
-
-% 3-point Gauss-Legandre Quad: [-1 to 1]
-N_quad = 3;
-w_quad = [5/9,8/9,5/9];
-xi_quad = [-sqrt(3/5),0,sqrt(3/5)];
 
 % Make sure we aren't calling this by accident
 if strcmp(grid.moments_type,"Simple_No_Weno_reconst_fv") == 1 && strcmp(dir,"v") ==1
@@ -35,21 +27,26 @@ end
 
 % Transpose the direction if dir = "v"
 if dir == "v"
-    x = grid.v;
-    dx = grid.dv;
     Nx = sz_f(2);
     Nv = sz_f(1);
-    f_full = transpose(f_full);
+    f_bar_j = transpose(f_bar_j);
     f_bar_j = transpose(f_bar_j);
     fp_im_half = transpose(fp_im_half);
     fm_ip_half = transpose(fm_ip_half);
 end
 
+% Create the required memory
+        f_r_ip_half = zeros(1,k);
+        f_r_im_half = zeros(1,k);
+        Beta_r = zeros(1,k);
+        alpha_r = zeros(1,k);
+        alpha_r_tilde = zeros(1,k);
+        wr = zeros(1,k);
+        wr_tilde = zeros(1,k);
+
 % Compute the v_th location velocity grid
 for v_index = 1:Nv
 
-    % Compute a local f
-    f = f_full(:,v_index);
 
     % Compute the ith location spatially
     for i = 1:Nx
@@ -60,19 +57,19 @@ for v_index = 1:Nv
         %using (2.10), again based on i−1 the stencils (2.50), for r = 0, ..., k − 1;
 
         % Create a vector for f^r_p, f^r_m
-        f_r_ip_half = zeros(1,k);
-        f_r_im_half = zeros(1,k);
-        Beta_r = zeros(1,k);
-        alpha_r = zeros(1,k);
-        alpha_r_tilde = zeros(1,k);
-        wr = zeros(1,k);
-        wr_tilde = zeros(1,k);
+        f_r_ip_half = f_r_ip_half*0;
+        f_r_im_half = f_r_im_half*0;
+        Beta_r = Beta_r*0;
+        alpha_r = alpha_r*0;
+        alpha_r_tilde = alpha_r_tilde*0;
+        wr = wr*0;
+        wr_tilde = wr_tilde*0;
 
         for r = 0:k - 1
 
             % Construct the polynomial
-            pre_xr_index = linspace(i-r,i-r+k-1,k);
-            xr_index = mapindex(dir,pre_xr_index,Nx);
+            %pre_xr_index = linspace(i-r,i-r+k-1,k);
+            %xr_index = mapindex(dir,pre_xr_index,Nx);
             %yr_poly = f(xr_index);
             %ujm = yr_poly(1);
             %uj = yr_poly(2);
@@ -117,17 +114,15 @@ for v_index = 1:Nv
             %                 end
             %             end
 
-            % Since we've shown equiv
-            f_bar_j(xr_index,v_index) = f(xr_index);
-
 
 
             % (2.11) v_bar
             f_ip_half = 0;
             f_im_half = 0;
             for j = 0:k-1
-                f_ip_half = f_ip_half + crj(k,r,j)*f_bar_j(mapindex(dir,i - r + j,Nx),v_index);
-                f_im_half = f_im_half + crj_tilde(k,r,j)*f_bar_j(mapindex(dir,i - r + j,Nx),v_index);
+                indx = mapindex(dir,i - r + j,Nx);
+                f_ip_half = f_ip_half + crj(k,r,j)*f_bar_j(indx,v_index);
+                f_im_half = f_im_half + crj_tilde(k,r,j)*f_bar_j(indx,v_index);
             end
 
             % Save the output (r + 1) for matlab
@@ -263,24 +258,28 @@ end
 % end
 
 function analytic = beta_analytic_calc(i,f_bar_j,k,r,dir,Nx)
+im = mapindex(dir,i-1,Nx);
+ip = mapindex(dir,i+1,Nx);
+imm =  mapindex(dir,i-2,Nx);
+ipp =  mapindex(dir,i+2,Nx);
 if k == 1
     analytic = 1;
 elseif k == 2
     if r == 0
-        analytic = (f_bar_j(mapindex(dir,i+1,Nx))- f_bar_j(i))^2;
+        analytic = (f_bar_j(ip)- f_bar_j(i))^2;
     elseif r == 1
-        analytic = (f_bar_j(i) - f_bar_j(mapindex(dir,i-1,Nx)))^2;
+        analytic = (f_bar_j(i) - f_bar_j(im))^2;
     end
 elseif k == 3
     if r == 0
-        analytic = (13/12)*(f_bar_j(i) - 2*f_bar_j(mapindex(dir,i+1,Nx)) + f_bar_j(mapindex(dir,i+2,Nx)))^2 +...
-            (1/4)*(3*f_bar_j(i) - 4*f_bar_j(mapindex(dir,i+1,Nx)) + f_bar_j(mapindex(dir,i+2,Nx)))^2;
+        analytic = (13/12)*(f_bar_j(i) - 2*f_bar_j(ip) + f_bar_j(ipp))^2 +...
+            (1/4)*(3*f_bar_j(i) - 4*f_bar_j(ip) + f_bar_j(ipp))^2;
     elseif r == 1
-        analytic = (13/12)*(f_bar_j(mapindex(dir,i-1,Nx)) - 2*f_bar_j(i) + f_bar_j(mapindex(dir,i+1,Nx)))^2 +...
-            (1/4)*(f_bar_j(mapindex(dir,i-1,Nx)) - f_bar_j(mapindex(dir,i+1,Nx)))^2;
+        analytic = (13/12)*(f_bar_j(im) - 2*f_bar_j(i) + f_bar_j(ip))^2 +...
+            (1/4)*(f_bar_j(im) - f_bar_j(ip))^2;
     elseif r == 2
-        analytic = (13/12)*(f_bar_j(mapindex(dir,i-2,Nx)) - 2*f_bar_j(mapindex(dir,i-1,Nx)) + f_bar_j(i))^2 +...
-            (1/4)*(f_bar_j(mapindex(dir,i-2,Nx)) - 4*f_bar_j(mapindex(dir,i-1,Nx)) + 3*f_bar_j(i))^2;
+        analytic = (13/12)*(f_bar_j(imm) - 2*f_bar_j(im) + f_bar_j(i))^2 +...
+            (1/4)*(f_bar_j(imm) - 4*f_bar_j(im) + 3*f_bar_j(i))^2;
     end
 end
 end

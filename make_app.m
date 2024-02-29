@@ -29,7 +29,7 @@ grid.dv = grid.v(2) - grid.v(1);
 % Time:
 grid.t_min = 0.0;
 grid.t_max = 0.5;
-grid.dt = (1/96)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
+grid.dt = (1/13)*(grid.dx/grid.v_max); %(1/24)*(grid.dx/grid.v_max);
 grid.time = grid.t_min;
 grid.NT = 1;
 grid.time_vec = [grid.t_min];
@@ -128,7 +128,7 @@ end
 
 
 % Make the Knudsen Number array
-app.eps0 = 10e-5;
+app.eps0 = 1e-5;
 
 % Save the grid object to the app 
 app.grid = grid;
